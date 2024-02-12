@@ -1,0 +1,194 @@
+---
+title: "FM: - Week2 - Assignment"
+author: "Thanasit C."
+date: "2024-01-24"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Week2: Assignment
+
+### 1. Packages
+install.packages("ggplot2")\
+install.packages("tidyverse")\
+install.packages("readxl")\
+install.packages("dplyr")\
+install.packages("ggpubr")\
+
+
+### 2. Libraries
+```{r packages, warning=FALSE, results='hide', message=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(readxl)
+library(dplyr)
+library(ggpubr)
+```
+
+
+### 3. Set working directory
+```{r}
+setwd("/Users/sieng/Documents/Study/MS.Business Analytics/SPRING 2024/Fundamental of Machine Learning/Assignment/Assignment 1")
+```
+
+
+### 4. Import data [Top 50 stocks in The Stock Exchange of Thailand: SET50]
+source: https://www.set.or.th/en/market/index/set50/overview
+```{r}
+set50df <- read_excel("FML - Assignment_1 - dataset - SET50.xlsx") %>% as.data.frame()
+str(set50df)
+```
+
+### 5. Data manipulation
+
+#### 5.1 Change column name
+It is easier not to use "%" or "()" as a column name
+```{r}
+colnames(set50df)[7] <- "DailyRetrun"
+colnames(set50df)[10] <- "Volume"
+colnames(set50df)[11] <- "Value"
+```
+
+#### 5.2 Ranking
+Create new column (variable) by ranking column $DailyReturn. Then change its class from "Numeric" to "Factor with ordered"\
+Then I order by its rank and find that "TRUE" is perform the best.  
+```{r}
+set50df$Ranking <- rank(-set50df$DailyRetrun)
+class(set50df$Ranking)
+
+set50df$Ranking <- factor(set50df$Ranking, order = TRUE)
+class(set50df$Ranking)
+
+set50rankdf <- data.frame(set50df$Symbol, set50df$Ranking)
+colnames(set50rankdf)[1] <- "Symbol"
+colnames(set50rankdf)[2] <- "Ranking"
+set50rankdf[order(set50rankdf$Ranking),]
+```
+
+#### 5.3 Convert1 
+To convert class of $Industrial column from "Character" to "Factor" variable\
+Initial class of $Industry is "Character". Then convert to "Factor"
+```{r}
+class(set50df$Industry)
+set50df$Industry <- as.factor(set50df$Industry)
+class(set50df$Industry)
+```
+
+#### 5.4 Convert2
+To convert $Value unit from "'000 Bahts" to "millions baht"
+```{r}
+set50df$Value <- set50df$Value/1000 
+```
+
+
+#### 5.5 Create new table 
+To explore more about the relationship between $DailyReturn and $Industry
+```{r}
+set50Inddf <- set50df[c(12,7,11)]
+set50Inddf2 <- set50df %>% 
+                 group_by(Industry) %>%
+                 count(Industry)
+set50Inddf3 <- set50Inddf %>%
+                  group_by(Industry) %>%
+                  dplyr::summarise(AvgValue = mean(Value), AvgReturn = mean(DailyRetrun))
+set50Inddf4 <- merge(set50Inddf3, set50Inddf2, by.x = "Industry")
+colnames(set50Inddf4)[4] <- "NumberOfStocks"
+str(set50Inddf4)
+```
+
+
+### 6. Descriptive
+
+#### 6.1 Data summary
+```{r}
+summary(set50df)
+```
+
+```{r}
+summary(set50Inddf4)
+```
+
+#### 6.2 Statistics
+For $DailyReturn and Value.
+```{r}
+statistics <-  c("mean", "max", "min", "range", "StdDev", "variance", "correlation")
+DailyReturn <- c(mean(set50df$DailyRetrun), 
+                 max(set50df$DailyRetrun), 
+                 min(set50df$DailyRetrun), 
+                 max(set50df$DailyRetrun) - min(set50df$DailyRetrun),
+                 sd(set50df$DailyRetrun),
+                 var(set50df$DailyRetrun),
+                 cor(set50df$DailyRetrun, set50df$Value))
+Value <- c(mean(set50df$Value), 
+                 max(set50df$Value), 
+                 min(set50df$Value), 
+                 max(set50df$Value) - min(set50df$Value),
+                 sd(set50df$Value),
+                 var(set50df$Value),
+                 cor(set50df$Value, set50df$DailyRetrun))
+statdf <- data.frame(statistics, DailyReturn, Value)
+statdf$DailyReturn <- round(statdf$DailyReturn, digits = 2)
+statdf$Value <- round(as.numeric(format(statdf$Value, scientific = FALSE)), digits = 2)
+statdf
+```
+
+
+#### 6.3 Visualization
+First, I create [Scatter plot] between stocks daily return and trade value.\
+Then I plot [Histogram] to see the distribution of the stock return.\
+Next, create a [Column chart] to explore diversity of stocks in SET50.\
+Lastly, another [Scatter plot with linear regression] is created to investigate Industry daily return and Industry trade value.
+
+```{r, warning=FALSE}
+set50df %>% ggplot(mapping = aes(x = Value, y = DailyRetrun, label = Symbol)) +
+              geom_point() + 
+              geom_text() +
+              geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+              labs(title = ("The Stock Exchange of Thailand top 50 stocks"), 
+                   subtitle = ("Scatter plot between Stocks Daily return and Trade Value"), 
+                   caption = ("As of Jan 24, 2024")) +
+              xlab("Value (millions)") +
+              ylab("Daily return (%)")
+  
+set50df %>% ggplot(data = set50df, mapping = aes(x = DailyRetrun)) +
+              geom_histogram(binwidth = 0.25) +
+              geom_vline(mapping = aes(xintercept = mean(DailyRetrun)), 
+                         color = "blue", 
+                         linetype = "dashed", 
+                         size = 1) +
+              labs(title = ("The Stock Exchange of Thailand top 50 stocks"), 
+                   subtitle = ("Daily Return Distribution"), 
+                   caption = "As of Jan 24, 2024") +
+              xlab("Count (n)") +
+              ylab("Daily Return (%)")  
+  
+set50Inddf4 %>% ggplot(mapping=aes(x=Industry, y=NumberOfStocks, label = NumberOfStocks)) +
+                  geom_col(fill = "lightblue") +
+                  geom_text() +
+                  labs(title = ("The Stock Exchange of Thailand top 50 stocks"), 
+                       subtitle = ("Industry diversification"), 
+                       caption = "As of Jan 24, 2024") +
+                  ylab("Number of Stocks")
+
+set50Inddf4 %>% ggplot(mapping = aes(x = AvgValue, y = AvgReturn, label = Industry)) +
+                  geom_point() +
+                  geom_text() +
+                  geom_smooth(method = "lm", formula = y~x) +
+                  stat_cor(label.y = 0.75,
+                           mapping = aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~"))) +
+                  labs(title = ("The Stock Exchange of Thailand top 50 stocks"), 
+                       subtitle = ("Relationship between Indusrty and Daily Return"), 
+                       caption = "As of Jan 24, 2024") +
+                  xlab("Value (millions)") +
+                  ylab("Daily Return (%)")
+
+```
+
+
+
+
