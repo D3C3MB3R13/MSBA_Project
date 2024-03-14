@@ -1,6 +1,6 @@
 This is second assignment for Business Analytic.
 The data is from IPUMS USA. The data contains Household and personal charavteristic variables for the year of 2021 - 2022. 
-The CSV file is 710 Mb big, represent 6.6 million observations.
+The CSV file is 710 Mb big, represent 6.6 million observations. You can find the data via this link: https://drive.google.com/file/d/1FOzPPj04KdiSGDgfvcBAaAwSwzY9b7oV/view
 
 There are 6 questions to answer.
 1. Are there any missing values?
