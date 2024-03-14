@@ -3,9 +3,9 @@ title: "2024_MSBA_SPRING_GRADE"
 author: "Thanasit C."
 date: "2024-02-27"
 output:
+  word_document: default
   html_document:
     df_print: paged
-  word_document: default
 ---
 
 ```{r setup, include=FALSE}
