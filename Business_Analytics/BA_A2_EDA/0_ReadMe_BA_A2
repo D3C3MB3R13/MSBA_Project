@@ -1,0 +1,13 @@
+This is second assignment for Business Analytic.
+The data is from IPUMS USA. The data contains Household and personal charavteristic variables for the year of 2021 - 2022. 
+The CSV file is 710 Mb big, represent 6.6 million observations.
+
+There are 6 questions to answer.
+1. Are there any missing values?
+2. Identify the states that have the highest cost of electricity, gas, and water.
+3. Are there any states with an imbalance in Sex?
+4. Create a new variable that indicates the Total Annual cost that is the sum of the cost of Electricity, Gas, and Water. Which states have the highest total cost?
+5. Which state has the oldest, on average, residents?
+6. What can you say about the residents of Ohio based on their age, sex, race, and language. Use only the most recent data.
+
+My work is far beyond these questions. I also do some hypotesis testing, data visualization for a much data better understanding. The report is 25 pages long.
