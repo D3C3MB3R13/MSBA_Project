@@ -1,0 +1,707 @@
+---
+title: "BA_Assignment2"
+author: "Thanasit C."
+date: "2024-03-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. Summary
+Dataset provided by IPUMS USA for the year of 2021 - 2022, are observed from 51 States across the US contain more than 6.6 million observations and 21 variables. Dataset is already treated, there are no missing values nor N/A value. However, according to the Code book, in some particular variables there are some unusable values that need to be filter out before analyzing. See the full details of the findings in Section 5.\
+\n\
+For 2021, the highest cost of electricity is USD 9,990 share between 19 Stats. The highest cost of gas is USD 9,990 share across 4 states. lastly, the cost of water, the highest value is USD 6,200 from The State of California. For 2022, all of the 51 states shares the same highest cost of electricity at USD 9,900. The cost of gas share the highest value of USD 9,900 across 49 States EXCEPT Florida and Hawaii. Lastly, Hawaii has the highest cost of water at USD 7,100 in 2022. The detail of state shows in Section 5.\
+\n\
+Next, I explored the imbalance of gender (SEX) across the country. An imbalance of gender exists in every States, The highest imbalance state is The District of Columbia, which has female almost 7% more than male. In the other hand, the closet proportion between male and female, 0.04%, is the State of Utah. I also performed hypothesis testing to ensure the imbalance, the result rejects H0 which mean there is a different between the proportion of male and female. The mean different is -1.53%, I can say that the proportion of female is 1.53% higher than male.\
+\n\
+For 2021 and 2022, the state that have the highest total cost of electric, gas, and water combine is The State of California. Even through, I calculate separately for each category, The State of California is still has the highest total cost. I dig a bit deeper by find ding the number of observations of each state. I found that The State of California has the highest number of observations, around 20% - 50% more than the second place, Texas. This finding back up the reason why California have the highest total cost.\
+\n\
+The State of Maine on average has the oldest residents with the age of 46.8 years old in 2021 and 47.2 years old in 2022. I also found that the average age of USA residents grows from 42.7 years old in 2021 to 42.9 years old in 2022.\
+\n\
+Lastly, I found some insights related to The State of Ohio for 2022. The residence lives in Ohio has an average age at 43.2 years old, a bit older compares to the nation average, 42.9 years old. I combined 'SEX' and 'AGE' in my analysis, and found that an average age of male is 2.5 years, almost 6%, lower than female, 41.9 compared to 44.4 years old. In Ohio, the proportion of female to male is 51.15% to 48.85%. The different is -2.3% which is higher than nation wide different, -1.5%. There are all 9 races live in Ohio. However, White people is the dominant race with almost 82%. Last but not least, there are 97 languages used in the US, however, in Ohio, there are only 57 languages reported. As expected, the most use languages at home is English with the proportion of 88.7%. Unsurprisingly, there are only 51 persons who speak 'Thai/Laos at their home' which is around 0.04%.
+
+
+
+# 2. Library
+```{r, warning=FALSE, message=FALSE}
+library(dplyr)
+library(ExcelFunctionsR)
+library(ggplot2)
+library(ggpubr)
+library(forcats)
+library(tidyr)
+```
+
+# 3. Import data
+```{r, warning=FALSE, message=FALSE}
+setwd("/Users/sieng/Documents/Study/MS.Business Analytics/SPRING 2024/Business Anaytics/BA - Assignment/BA - Assignment2")
+maindf <- read.csv("usa_00006.csv")
+```
+
+# 4. Data preparation
+```{r, warning=FALSE, message=FALSE}
+# 4.1. Data summary
+str(maindf)
+head(maindf)
+tail(maindf)
+summary(maindf)
+
+# 4.2. Convert Data Attributes
+maindf$LANGUAGE <- factor(maindf$LANGUAGE)
+maindf$RACE <- factor(maindf$RACE)
+maindf$SEX <- factor(maindf$SEX)
+maindf$STATEFIP <- factor(maindf$STATEFIP)
+maindf$YEAR <- factor(maindf$YEAR)
+str(maindf)
+```
+
+
+
+# 5. Data Analysis and Question Answering.
+## 5.1. Question_1; Are there any missing values?
+Answer_Q1; There is no missing value. Actually, all N/A values are treated for example, code 0 in column 'LANGUAGE' means 'N/A or blank'.
+```{r, results='hold'}
+# Check number of N/A in data set
+sumna <- sum(is.na(maindf))
+print(paste("Number of N/A dataset is ", sumna))
+
+colsumna <- colSums(is.na(maindf))
+print(paste("Below shows the number of N/A in each column"))
+colsumna
+```
+
+
+## 5.2 Question_2; Identify the states that have the highest cost of electricity, gas, and water.
+NOTED: According to the Code book, there are few rows that unusable. So I started with filtering it out.\
+Answer_Q2;\
+For 2021, there are 19 states share the highest cost of electricity is $9,990 which are California (6), Colorado (8), Connecticut (9), District of Columbia (11), Florida (12), Hawaii (15), Indiana (18), Massachusetts (25), Michigan (26), Missouri (29), New Jersey (34), New York (36), Oregon (41), Rhode Island (44), Tennessee (47), Texas (48), Vermont (50), Virginia (51), Washington (53).\
+For 2021, there are 4 states share the highest cost of gas is $9,990 which are California (6), Massachusetts (25), Missouri (29), Rhode Island (44).\
+For 2021, the highest cost of water is $6,200 which is The State of California (6).\
+\n\
+For 2022, there are all 51 states that share the highest cost of electricity is $9,990.\
+For 2022, there are 49 states share the highest cost of gas is $9,990 EXCLUDE The State of Florida (12) and The State of Hawaii (15).\
+For 2022, the highest cost of water is $7,100 which is The State of Hawaii (15).\
+
+```{r}
+## Data manipulation
+q2_data_electric <- maindf %>%
+                      select(STATEFIP, YEAR, COSTELEC) %>%
+                      filter(COSTELEC < 9993)
+
+q2_data_gas <- maindf %>%
+                 select(STATEFIP, YEAR, COSTGAS) %>%
+                 filter(COSTGAS < 9992)
+
+q2_data_water <- maindf %>%
+                   select(STATEFIP, YEAR, COSTWATR) %>%
+                   filter(COSTWATR < 9993)
+```
+```{r}
+# Cost of Electric
+q2_electric_2021 <- q2_data_electric %>%
+                      filter(YEAR == 2021) %>%
+                      group_by(STATEFIP) %>%
+                      summarise(maxCOSTELEC21 = max(COSTELEC)) %>%
+                      slice_max(maxCOSTELEC21, n = 1)
+
+q2_electric_2022 <- q2_data_electric %>%
+                      filter(YEAR == 2022) %>%
+                      group_by(STATEFIP) %>%
+                      summarise(maxCOSTELEC22 = max(COSTELEC)) %>%
+                      slice_max(maxCOSTELEC22, n =1)
+
+q2_electric <- merge(q2_electric_2021, q2_electric_2022, all = TRUE)
+q2_electric
+
+hist_COSTELEC21 <- q2_data_electric %>%
+                     filter(YEAR == 2021) %>%
+                     ggplot(aes(x = COSTELEC)) +
+                       geom_histogram(binwidth = 500L, fill = "darkcyan", color = "darkgrey") +
+                       geom_vline(aes(xintercept = mean(COSTELEC)), color = "blue", linetype = "dashed") +
+                       labs(title = "2021") +
+                       xlab(label = "Cost of Electric ($)") +
+                       ylab(label = "Count Fequency") +
+                       theme_classic() +
+                       theme(plot.title = element_text(face = "bold"),
+                             legend.position = "none")
+
+hist_COSTELEC22 <- q2_data_electric %>%
+                     filter(YEAR == 2022) %>%
+                     ggplot(aes(x = COSTELEC)) +
+                       geom_histogram(binwidth = 500L, fill = "darkcyan", color = "darkgrey") +
+                       geom_vline(aes(xintercept = mean(COSTELEC)), color = "blue", linetype = "dashed") +
+                       labs(title = "2021") +
+                       xlab(label = "Cost of Electric ($)") +
+                       ylab(label = "Count Fequency") +
+                       theme_classic() +
+                       theme(plot.title = element_text(face = "bold"),
+                             legend.position = "none")
+
+hist_COSTELEC <- ggarrange(hist_COSTELEC21, hist_COSTELEC22, 
+                           ncol = 2, nrow = 1,
+                           widths = c(1,1), heights = c(1,1))
+hist_COSTELEC <- annotate_figure(hist_COSTELEC, 
+                          top = text_grob("Distribution of Cost of Electric", 
+                                          color = "black", 
+                                          face = "bold", 
+                                          size = 18))
+hist_COSTELEC
+```
+```{r}
+# Cost of Gas
+q2_gas_2021 <- q2_data_gas %>%
+                 filter(YEAR == 2021) %>% 
+                 group_by(STATEFIP) %>%
+                 summarise(maxCOSTGAS21 = max(COSTGAS)) %>%
+                 slice_max(maxCOSTGAS21, n = 1)
+
+q2_gas_2022 <- q2_data_gas %>%
+                 filter(YEAR == 2022) %>% 
+                 group_by(STATEFIP) %>%
+                 summarise(maxCOSTGAS22 = max(COSTGAS)) %>%
+                 slice_max(maxCOSTGAS22, n = 1)
+
+q2_gas <- merge(q2_gas_2021, q2_gas_2022, all = TRUE)
+q2_gas
+
+hist_COSTGAS21 <- q2_data_gas %>%
+                    filter(YEAR == 2021) %>%
+                    ggplot(aes(x = COSTGAS)) +
+                      geom_histogram(binwidth = 500L, fill = "darkcyan", color = "darkgrey") +
+                      geom_vline(aes(xintercept = mean(COSTGAS)), color = "blue", linetype = "dashed") +
+                      labs(title = "2021") +
+                      xlab(label = "Cost of Gas ($)") +
+                      ylab(label = "Count Fequency") +
+                      theme_classic() +
+                      theme(plot.title = element_text(face = "bold"),
+                            legend.position = "none")
+
+hist_COSTGAS22 <- q2_data_gas %>%
+                    filter(YEAR == 2022) %>%
+                    ggplot(aes(x = COSTGAS)) +
+                      geom_histogram(binwidth = 500L, fill = "darkcyan", color = "darkgrey") +
+                      geom_vline(aes(xintercept = mean(COSTGAS)), color = "blue", linetype = "dashed") +
+                      labs(title = "2022") +
+                      xlab(label = "Cost of Gas ($)") +
+                      ylab(label = "Count Fequency") +
+                      theme_classic() +
+                      theme(plot.title = element_text(face = "bold"),
+                            legend.position = "none")
+
+hist_COSTGAS <- ggarrange(hist_COSTGAS21, hist_COSTGAS22, 
+                          ncol = 2, nrow = 1,
+                          widths = c(1,1), heights = c(1,1))
+hist_COSTGAS <- annotate_figure(hist_COSTGAS, 
+                                top = text_grob("Distribution of Cost of Gas",
+                                                color = "black", 
+                                                face = "bold", 
+                                                size = 18))
+hist_COSTGAS
+```
+```{r}
+q2_water_2021 <- q2_data_water %>%
+                   filter(YEAR == 2021) %>%
+                   group_by(STATEFIP) %>%
+                   summarise(maxCOSTWATR21 = max(COSTWATR)) %>%
+                   slice_max(maxCOSTWATR21, n = 1)
+
+q2_water_2022 <- q2_data_water %>%
+                   filter(YEAR == 2022) %>%
+                   group_by(STATEFIP) %>%
+                   summarise(maxCOSTWATR22 = max(COSTWATR)) %>%
+                   slice_max(maxCOSTWATR22, n = 1)
+
+q2_water <- merge(q2_water_2021, q2_water_2022, all = TRUE)
+q2_water
+
+hist_COSTWATR21 <- q2_data_water %>%
+                     filter(YEAR == 2021) %>%
+                     ggplot(aes(x = COSTWATR)) +
+                       geom_histogram(binwidth = 500L, fill = "darkcyan", color = "darkgrey") +
+                       geom_vline(aes(xintercept = mean(COSTWATR)), color = "blue", linetype = "dashed") +
+                       labs(title = "2021") +
+                       xlab(label = "Cost of Water ($)") +
+                       ylab(label = "Count Fequency") +
+                       theme_classic() +
+                       theme(plot.title = element_text(face = "bold"),
+                             legend.position = "none")
+
+hist_COSTWATR22 <- q2_data_water %>%
+                     filter(YEAR == 2022) %>%
+                     ggplot(aes(x = COSTWATR)) +
+                       geom_histogram(binwidth = 500L, fill = "darkcyan", color = "darkgrey") +
+                       geom_vline(aes(xintercept = mean(COSTWATR)), color = "blue", linetype = "dashed") +
+                       labs(title = "2022") +
+                       xlab(label = "Cost of Water ($)") +
+                       ylab(label = "Count Fequency") +
+                       theme_classic() +
+                       theme(plot.title = element_text(face = "bold"),
+                             legend.position = "none")
+
+hist_COSTWATR <- ggarrange(hist_COSTWATR21, hist_COSTWATR22, 
+                           ncol = 2, nrow = 1,
+                           widths = c(1,1), heights = c(1,1))
+hist_COSTWATR <- annotate_figure(hist_COSTWATR, 
+                          top = text_grob("Distribution of Cost of Water", 
+                                          color = "black", 
+                                          face = "bold", 
+                                          size = 18))
+hist_COSTWATR
+```
+
+
+## 5.3 Question_3; Are there any states with an imbalance in Sex?
+Answer_Q3; According to the sample, there are imbalance in Gender in every states. As the table below, the different clearly shown in every states. The highest different is 6.98% at The District of Columbia, in the other hand, the smallest different is 0.04% at The States of Utah.\
+For a solid conclusion, I performed hypothesis testing as 'H0; mean different between proportion of Male and Female = 0'. The p-value is 0.000001712 which is less than 0.05, so that, H0 is rejected and accept H1. There is the different between the proportion of Male and Female, the mean different is -1.53% which mean the proportion of Female is larger than Male.\
+I also create a box plot of the proportion different in percentage between Male and Female. The mean and median is closed to each other at -1.53%. The distribution seems to be a normal bell curve, with few potential outliers in both tails. I created the z-score, and found that there is one outlier at the right tail. Alaska is an outlier which have Male 6% more than Female populations. 
+```{r}
+# Data construction
+q3_data <- maindf %>%
+             select(STATEFIP, SEX) %>%
+             filter(SEX != 9) %>%
+             group_by(STATEFIP) %>% 
+             summarise(Male = COUNTIF(SEX, 1),
+                       Female = COUNTIF(SEX, 2),
+                       percMale = round(100 * (Male/(Male + Female)), digits = 2),
+                       percFemale = round(100 * (Female/(Male + Female)), digits = 2),
+                       percDiff = percMale - percFemale)
+```
+```{r, warning=FALSE, message=FALSE}
+# Hypothesis testing
+## H0: Male - Female = 0
+## H1: Male - Female <> 0
+t.test(x = q3_data$percDiff, y = NULL, alternative = c("two.side"), mu = 0)
+```
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+print(paste("p-value = 0.000001712. Then At 95% Confidence Interval, HO is rejected as p-value < 0.05 and accept alternative hypothesis. The different between number of Male and Female is more than 0, so there is an imbalance in Sex"))
+```
+```{r, warning=FALSE, message=FALSE}
+# Create box plot the different between Male and Female proportion in percentage
+q3_box <- q3_data %>%
+            ggplot() +
+              geom_boxplot(aes(x = "", y = percDiff)) +
+              geom_hline(aes(yintercept = mean(percDiff)), color = "blue", linetype = "dashed") +
+              geom_hline(aes(yintercept = 0, color = "red")) +
+              geom_text(aes(x = "", 
+                            y = mean(percDiff), 
+                            label = paste(round(mean(percDiff), digits = 2), "%", sep = "")),
+                        color = "blue",
+                        vjust = -0.5) +
+              labs(title = "The Proportion different in Percentage between Male and Female") +
+              xlab(label = NULL) +
+              ylab(label = "Percentage (%)") +
+              theme_classic() +
+              theme(plot.title = element_text(face = "bold"),
+                    legend.position = "none")
+
+q3_box          
+ZpercDiff <- q3_data %>%
+               mutate(zScore = (percDiff-mean(percDiff))/sqrt(var(percDiff)))
+ZpercDiff
+
+ZpercDiff_outlier <- ZpercDiff %>%
+                       filter(zScore < -3 | zScore > 3)
+ZpercDiff_outlier
+```
+
+
+## 5.4 Question_4; Create a new variable that indicates the Total Annual cost that is the sum of the cost of Electricity, Gas, and Water. Which states have the highest total cost?
+Answer_Q4; The highest total cost of Electric, Gas, and Water is The State of California (FIP Code = 6), for both 2021 and 2022. I started with filter out unusable rows, according to the code book. Since I curious about the number of observations of each States which is directly effect the calculation. I found that number of observations of The State of California is the highest in every variables, that's strongly support the findings. I also found that The State of California have the highest total cost of each category in both 2021 and 2022.
+```{r}
+## Subsetting data
+q4_data_electric <- maindf %>%
+                      select(STATEFIP, YEAR, COSTELEC) %>%
+                      filter(COSTELEC < 9993)
+
+q4_data_gas <- maindf %>%
+                 select(STATEFIP, YEAR, COSTGAS) %>%
+                 filter(COSTGAS < 9992)
+
+q4_data_water <- maindf %>%
+                   select(STATEFIP, YEAR, COSTWATR) %>%
+                   filter(COSTWATR < 9993)
+
+## Want to know how many observations of each STATES
+q4_obs_elec <- q4_data_electric %>%
+                 select(STATEFIP) %>%
+                 group_by(STATEFIP) %>%
+                 summarise(Obs_elec = n()) %>%
+                 arrange(desc(Obs_elec))
+
+q4_obs_elec_bar <- q4_obs_elec %>%
+                     ggplot() +
+                       geom_col(aes(y = fct_reorder(STATEFIP, Obs_elec), x = Obs_elec)) +
+                       labs(title = "Electric") +
+                       ylab(label = "STATE (FIP Code)") +
+                       xlab(label = NULL) +
+                       theme_classic() +
+                       theme(axis.text.y = element_text(size = 6),
+                             plot.title = element_text(size = 10, face = "bold"))
+
+q4_obs_gas <- q4_data_gas %>%
+                select(STATEFIP) %>%
+                group_by(STATEFIP) %>%
+                summarise(Obs_gas = n()) %>%
+                arrange(desc(Obs_gas))
+
+q4_obs_gas_bar <- q4_obs_gas %>%
+                    ggplot() +
+                      geom_col(aes(y = fct_reorder(STATEFIP, Obs_gas), x = Obs_gas)) +
+                      labs(title = "Gas") +
+                      ylab(label = NULL) +
+                      xlab(label = NULL) +
+                      theme_classic() +
+                      theme(axis.text.y = element_text(size = 6),
+                            plot.title = element_text(size = 10, face = "bold"))
+
+q4_obs_water <- q4_data_water %>%
+                  select(STATEFIP) %>%
+                  group_by(STATEFIP) %>%
+                  summarise(Obs_water = n()) %>%
+                  arrange(desc(Obs_water))
+
+q4_obs_water_bar <- q4_obs_water %>%
+                      ggplot() +
+                        geom_col(aes(y = fct_reorder(STATEFIP, Obs_water), x = Obs_water)) +
+                        labs(title = "Water") +
+                        ylab(label = NULL) +
+                        xlab(label = NULL) +
+                        theme_classic() +
+                        theme(axis.text.y = element_text(size = 6),
+                              plot.title = element_text(size = 10, face = "bold"))
+
+q4_obs_bar <- ggarrange(q4_obs_elec_bar, q4_obs_gas_bar, q4_obs_water_bar,
+                        ncol = 3, nrow = 1)
+q4_obs_bar <- annotate_figure(q4_obs_bar, top = text_grob("Number of Oberservations", size = 14, face = "bold"))
+q4_obs_bar
+```
+```{r}
+# Total Cost of 2021
+q4_electric_2021 <- q4_data_electric %>%
+                      filter(YEAR == 2021) %>%
+                      group_by(STATEFIP) %>%
+                      summarise(sumCOSTELEC21 = sum(COSTELEC))
+
+q4_gas_2021 <- q4_data_gas %>%
+                 filter(YEAR == 2021) %>% 
+                 group_by(STATEFIP) %>%
+                 summarise(sumCOSTGAS21 = sum(COSTGAS))
+
+q4_water_2021 <- q4_data_water %>%
+                   filter(YEAR == 2021) %>%
+                   group_by(STATEFIP) %>%
+                   summarise(sumCOSTWATR21 = sum(COSTWATR))
+
+q4_totalcost21 <- merge(q4_electric_2021, q4_gas_2021) %>%
+                    merge(q4_water_2021) %>%
+                    mutate(TotalCost21 = sumCOSTELEC21 + sumCOSTGAS21 + sumCOSTWATR21) %>%
+                    arrange(desc(TotalCost21))
+```
+```{r}
+# Total Cost of 2022
+q4_electric_2022 <- q4_data_electric %>%
+                      filter(YEAR == 2022) %>%
+                      group_by(STATEFIP) %>%
+                      summarise(sumCOSTELEC22 = sum(COSTELEC))
+
+q4_gas_2022 <- q4_data_gas %>%
+                 filter(YEAR == 2022) %>% 
+                 group_by(STATEFIP) %>%
+                 summarise(sumCOSTGAS22 = sum(COSTGAS)) 
+
+q4_water_2022 <- q4_data_water %>%
+                   filter(YEAR == 2022) %>%
+                   group_by(STATEFIP) %>%
+                   summarise(sumCOSTWATR22 = sum(COSTWATR))
+
+q4_totalcost22 <- merge(q4_electric_2022, q4_gas_2022) %>%
+                    merge(q4_water_2022) %>%
+                    mutate(TotalCost22 = sumCOSTELEC22 + sumCOSTGAS22 + sumCOSTWATR22) %>%
+                    arrange(desc(TotalCost22))
+```
+```{r}
+# Top 5 States in total cost of Electric, Gas, Water
+q4_totalcost21_t5 <- slice_max(q4_totalcost21, TotalCost21, n = 5)
+q4_totalcost21_t5
+q4_totalcost22_t5 <- slice_max(q4_totalcost22, TotalCost22, n = 5)
+q4_totalcost22_t5
+q4_totalcost_t5 <- merge(q4_totalcost21_t5, q4_totalcost22_t5) %>%
+                     select(STATEFIP, TotalCost21, TotalCost22) %>%
+                     arrange(desc(TotalCost22))
+q4_totalcost_t5
+
+q4_totalcost21_bar <- q4_totalcost_t5 %>%
+                        ggplot() +
+                          geom_col(aes(y = fct_reorder(STATEFIP, TotalCost21), x = TotalCost21), fill = "lightblue") +
+                          geom_text(aes(x = TotalCost21, y = STATEFIP, label = scales::comma(TotalCost21)), hjust = 1, size = 4) +
+                          labs(title = "2021") +
+                          ylab(label = "STATE (FIP Code)") +
+                          xlab(label = "Total Cost ($)") +
+                          theme_classic() +
+                          theme(axis.text.y = element_text(size = 8),
+                                plot.title = element_text(size = 14, face = "bold"))
+
+q4_totalcost22_bar <- q4_totalcost_t5 %>%
+                        ggplot() +
+                          geom_col(aes(y = fct_reorder(STATEFIP, TotalCost22), x = TotalCost22), fill = "lightblue") +
+                          geom_text(aes(x = TotalCost22, y = STATEFIP, label = scales::comma(TotalCost22)), hjust = 1, size = 4) +
+                          labs(title = "2022") +
+                          ylab(label = NULL) +
+                          xlab(label = "Total Cost ($)") +
+                          theme_classic() +
+                          theme(axis.text.y = element_text(size = 8),
+                                plot.title = element_text(size = 14, face = "bold"))
+
+q4_totalcost_bar <- ggarrange(q4_totalcost21_bar, q4_totalcost22_bar, ncol = 2, nrow = 1)
+q4_totalcost_bar <- annotate_figure(q4_totalcost_bar, top = text_grob("Top 5 Total Cost of Electric, Gas, and Water", size = 18, face = "bold"))
+q4_totalcost_bar
+```
+
+
+## 5.5 Question_5; Which state has the oldest, on average, residents?
+Answer_Q5; The State of Maine (FIP Code = 23) on average has the oldest residents with the age of 46.8 years old in 2021 and 47.2 years old in 2022. The average age of USA residents grows from 42.7 years old in 2021 to 42.9 years old in 2022.
+```{r, warning=FALSE, message=FALSE}
+q5_age2021 <- maindf %>%
+                select(STATEFIP, YEAR, AGE) %>%
+                filter(YEAR == 2021) %>%
+                group_by(STATEFIP) %>%
+                summarise(avgAge21 = round(mean(AGE), digits = 1))
+
+q5_age2022 <- maindf %>%
+                select(STATEFIP, YEAR, AGE) %>%
+                filter(YEAR == 2022) %>%
+                group_by(STATEFIP) %>%
+                summarise(avgAge22 = round(mean(AGE), digits = 1))
+
+q5_age2021_max <- slice_max(q5_age2021, avgAge21, n = 1)
+q5_age2022_max <- slice_max(q5_age2022, avgAge22, n =1)
+
+q5_age <- merge(q5_age2021_max, q5_age2022_max, all = TRUE)
+q5_age
+
+q5_age21_hist <- q5_age2021 %>%
+                   ggplot() +
+                     geom_col(aes(x = fct_rev(fct_reorder(STATEFIP, avgAge21)), y = avgAge21)) +
+                     geom_hline(aes(yintercept = mean(avgAge21)), color = "blue", linetype = "dashed") +
+                     geom_text(aes(y = 46, x = 40, label = paste("USA. Average 2021 = ", round(mean(avgAge21),digits = 1))),
+                               color = "blue", 
+                               size = 3,
+                               face = "bold") +
+                     labs(title = "2021") +
+                     ylab(label = "Age Average (years)") +
+                     xlab(label = NULL) +
+                     theme_classic() +
+                     theme(plot.title = element_text(face = "bold", size = 10),
+                           axis.text.x = element_text(angle = 90))
+
+q5_age22_hist <- q5_age2022 %>%
+                   ggplot() +
+                     geom_col(aes(x = fct_rev(fct_reorder(STATEFIP, avgAge22)), y = avgAge22)) +
+                     geom_hline(aes(yintercept = mean(avgAge22)), color = "blue", linetype = "dashed") +
+                     geom_text(aes(y = 46, x = 40, label = paste("USA. Average 2022 = ", round(mean(avgAge22),digits = 1))),
+                               color = "blue", 
+                               size = 3,
+                               face = "bold") +
+                     labs(title = "2022") +
+                     ylab(label = "Age Average (years)") +
+                     xlab(label = "States (FIPS Code)") +
+                     theme_classic() +
+                     theme(plot.title = element_text(face = "bold", size = 10),
+                           axis.text.x = element_text(angle = 90))
+
+qq_age_hist <- ggarrange(q5_age21_hist, q5_age22_hist,
+                         ncol = 1, nrow = 2) 
+qq_age_hist <- annotate_figure(qq_age_hist, 
+                               top = text_grob("Population Average Age in The US.", 
+                                                color = "black", 
+                                                face = "bold", 
+                                                size = 16))
+qq_age_hist
+```
+
+
+## 5.6 Question_6; What can you say about the residents of Ohio based on their age, sex, race, and language. Use only the most recent data.
+Answer_Q6; In this question, I discovered 5 interesting things. FIP Code for The State of Ohio is 39.\
+NOTED: Number of resident that live in Ohio according to the data is 120,666 observations for the year of 2022.\
+1) The average age of resident in The State of Ohio is 43.2 which is a bit higher than US average. The distribution of Age shows a little bit of left skew since the mean is a bit less than the median, however, it also looks like normal bell curve with no skewness.\
+2) I analysed 'SEX' and 'AGE' together. For 2022, I found that an average age of male is 2.5 years, almost 6%, lower than female, 41.9 compared to 44.4 years. The distribution of female age skew to the left more than male, however, both of it seems to be a normal bell shape.\  
+3) There are more Female live in Ohio than Male, with the proportion of 51.15 to 48.85. The different is -2.3% which is higher than nation wide different, -1.5%.\
+4) According to this data, there are all 9 races live in Ohio. However, White people is the dominant race with almost 82%. There are few Asians live in Ohio, since I'm from Thailand, my race live here only 1.7%.\
+5) There are 97 languages use in The US, however, in Ohio, there are only 57 languages reported. Expected, the most use languages at home is English with the proportion of 88.7%. The second place is 'N/A or blank' which means almost 5% don't answer this question. Unsurprisingly, there are only 51 persons who speak 'Thai/Laos at their home'.
+```{r}
+## Subsetting data
+q6_data <- maindf %>%
+             filter(STATEFIP == 39, YEAR == 2022) %>%
+             select(AGE, SEX, RACE, LANGUAGE)
+```
+```{r, results='hold', warning=FALSE, message=FALSE}
+## Q_6.1. Age
+q6_age_box <- q6_data %>%
+                ggplot() +
+                  geom_boxplot(aes(x = "", y = AGE), color = "darkcyan") +
+                  geom_hline(aes(yintercept = mean(AGE)), color = "blue", linetype = "dashed") +
+                  geom_text(aes(x = "", 
+                                y = mean(AGE), 
+                                label = round(mean(AGE), digits = 2)), 
+                            vjust = -0.5,
+                            color = "blue") +
+                  labs(title = "All Observations") +
+                  ylab(label = "Age (year)") +
+                  xlab(label = NULL) +
+                  theme_classic() +
+                  theme(plot.title = element_text(face = 'bold'))
+
+q6_age_hist <- q6_data %>%
+                 ggplot() +
+                   geom_histogram(aes(x = AGE), binwidth = 5L, fill = "lightblue") +
+                   geom_vline(aes(xintercept = mean(AGE)), color = "blue", linetype = "dashed") +
+                   labs(title = "The Age Distribution of Ohio Resident in 2022") +
+                   xlab(label = "Age (years)") +
+                   ylab(label = "Count Frequency") +
+                   theme_classic() +
+                   theme(plot.title = element_text(size = 16, face = "bold"))
+q6_age_hist
+```
+```{r, results='hold', warning=FALSE, message=FALSE}
+## Q_6.2. Age + SEX
+q6_agemale_box <- q6_data %>%
+                    filter(SEX == 1) %>%
+                    ggplot() +
+                      geom_boxplot(aes(x = "", y = AGE), color = "darkcyan") +
+                      geom_hline(aes(yintercept = mean(AGE)), color = "blue", linetype = "dashed") +
+                      geom_text(aes(x = "", 
+                                    y = mean(AGE), 
+                                    label = round(mean(AGE), digits = 2)), 
+                                vjust = -0.5,
+                                color = "blue") +
+                      labs(title = "Male") +
+                      ylab(label = NULL) +
+                      xlab(label = NULL) +
+                      theme_classic() +
+                      theme(plot.title = element_text(face = 'bold'))
+
+q6_agefemale_box <- q6_data %>%
+                      filter(SEX == 2) %>%
+                      ggplot() +
+                        geom_boxplot(aes(x = "", y = AGE), color = "darkcyan") +
+                        geom_hline(aes(yintercept = mean(AGE)), color = "blue", linetype = "dashed") +
+                        geom_text(aes(x = "", 
+                                      y = mean(AGE), 
+                                      label = round(mean(AGE), digits = 2)), 
+                                  vjust = -0.5,
+                                  color = "blue") +
+                        labs(title = "Female") +
+                        ylab(label = NULL) +
+                        xlab(label = NULL) +
+                        theme_classic() +
+                        theme(plot.title = element_text(face = 'bold'))
+
+q6_box <- ggarrange(q6_age_box, q6_agemale_box, q6_agefemale_box,
+                    ncol = 3, nrow = 1,
+                    widths = c(1.5,1,1), heights = c(1,1,1),
+                    common.legend = TRUE,
+                    align = 'h')
+q6_box <- annotate_figure(q6_box, 
+                          top = text_grob("Distribution of Aages in 2022 for The State of Ohio ", 
+                                          color = "black", 
+                                          face = "bold", 
+                                          size = 20))
+q6_box
+```
+```{r}
+## Q_6.3. SEX
+q6_sex <- q6_data %>%
+            filter(SEX != 9) %>%
+            select(SEX) %>%
+            summarise(Male = COUNTIF(SEX, 1),
+                      Female = COUNTIF(SEX, 2),
+                      percMale = round(100 * (Male/(Male + Female)), digits = 2),
+                      percFemale = round(100 * (Female/(Male + Female)), digits = 2),
+                      percDiff = percMale - percFemale) 
+q6_sex
+```
+```{r}
+## Q_6.4. Race
+q6_race <- q6_data %>%
+             select(RACE) %>%
+             group_by(RACE) %>%
+             summarise(RaceCount = n(),
+                       percRaceCount = round(100 * RaceCount/nrow(q6_data), digits = 2)) %>%
+             arrange(desc(RaceCount))
+q6_race
+
+q6_race_chart <- q6_race %>%
+                   ggplot() +
+                     geom_col(aes(x = fct_rev(fct_reorder(RACE, RaceCount)), y = RaceCount), fill = "darkcyan") +
+                     geom_text(aes(x = fct_rev(fct_reorder(RACE, RaceCount)), 
+                                   y = RaceCount, 
+                                   label = paste(scales::comma(RaceCount), paste(percRaceCount, "%", sep = ""), sep = "\n")), 
+                               vjust = -0.5) +
+                     ylim(0, 125000) +
+                     labs(title = "Resident Races in The State of Ohio") +
+                     xlab("Race") +
+                     ylab("Count") +
+                     theme_classic() +
+                     theme(plot.title = element_text(face = "bold"))
+
+q6_race_chart
+```
+```{r}
+## Q_6.5. Language
+q6_language <- q6_data %>% 
+                 select(LANGUAGE) %>%
+                 group_by(LANGUAGE) %>%
+                 summarise(LangCount = n(),
+                           percLangCount = round(100 * LangCount/nrow(q6_data), digits = 2)) %>%
+                 arrange(desc(LangCount))
+q6_language
+
+q6_language_thai <- q6_language %>%
+                      filter(LANGUAGE == 47)
+q6_language_thai
+
+q6_language_chart <- q6_language %>%
+                       slice_max(LangCount, n = 10) %>%
+                       ggplot() +
+                         geom_col(aes(x = fct_rev(fct_reorder(LANGUAGE, LangCount)), y = LangCount)) +
+                         geom_text(aes(x = fct_rev(fct_reorder(LANGUAGE, LangCount)), 
+                                   y = LangCount, 
+                                   label = paste(scales::comma(LangCount), paste(percLangCount, "%", sep = ""), sep = "\n")), 
+                               vjust = -0.5) +
+                         ylim(0, 120000) +
+                         labs(title = "Tops 10 Languages using at home") +
+                         xlab("Languages") +
+                         ylab("Count") +
+                         theme_classic() +
+                         theme(plot.title = element_text(face = "bold"))
+q6_language_chart
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
