@@ -1,0 +1,214 @@
+---
+title: "2024_MSBA_SPRING_GRADE"
+author: "Thanasit C."
+date: "2024-04-01"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r, warning=FALSE, message=FALSE, include=FALSE}
+## 1. Libraries
+library(dplyr)
+library(readxl)
+library(ggplot2)
+library(ggpattern)
+library(ggpubr)
+library(esquisse)
+```
+
+
+
+```{r, include=FALSE}
+## 2. Import data
+filepath <- "/Users/sieng/Documents/Study/MS.Business Analytics/SPRING 2024/GRADE.xlsx"
+
+fmldf <- read_excel(filepath, sheet ="FML")
+dvdf <- read_excel(filepath, sheet ="DV")
+badf <- read_excel(filepath, sheet ="BA")
+aipdf <- read_excel(filepath, sheet ="AiP")
+```
+
+
+
+```{r, include=FALSE}
+## 3. Data Visualization
+```
+
+
+```{r}
+# 1. Fundamental of Machine Learning
+## This subject is a basic of machine learning focusing in Supervised Machine Learning including K-NN classification, Naive Bayes Classification, K-mean Clustering, and DBSCAN Clustering algorithm. Grading system divides into 5 assignments, attendance and final exam.
+```
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+fmldf$List <- factor(fmldf$List, levels = c("Attendance", "Assignment 1", "Assignment 2", "Assignment 3", "Assignment 4", "Assignment 5", "Final", "Total"))
+
+fmlscore <- fmldf %>%
+              filter(List != "Total") %>%
+                ggplot(aes(x = List, fill = List)) +
+                  geom_col(aes(y = Total, fill = List), fill = "white", color = "black") +
+                  geom_col_pattern(aes(y = Score, fill = List), fill = "white", color = "Black", pattern = "stripe") +
+                  geom_text(aes(y = Total, label = Max), vjust = -0.5) +
+                  geom_text(aes(y = Score, label = Score), vjust = 1.5, face = "bold", size = 7) +
+                  theme_classic() +
+                  theme(plot.title = element_text(size = 16, face = "bold"),
+                        axis.text.x = element_text(size = 6)) +
+                  labs(title = "Fundamental Of Machine Learning") +
+                  xlab(label = element_blank()) +
+                  ylab(label = "Score (%)") +
+                  scale_y_continuous(limits = c(0, 25)) 
+
+fmlprogress <- fmldf %>%
+                 filter(List == "Total") %>%
+                   ggplot(aes(x = List)) +
+                     geom_col(aes(y = Total), fill = "white", color = "black") +
+                     geom_col_pattern(aes(y = Max), fill = "yellow", color = "Black", pattern = "stripe") +
+                     geom_text(aes(y = Max, label = Max), hjust = -0.25, face = "bold", size = 5) +
+                     theme_classic() +
+                     labs(x = NULL) +
+                     xlab(label = element_blank()) +
+                     ylab(label = "Progression (%)") +
+                     coord_flip()
+
+fmlchart <- ggarrange(fmlscore, fmlprogress, ncol = 1, nrow = 2, widths = c(1,1), heights = c(3,1))
+fmlchart
+```
+
+
+```{r}
+# 2. Data Visualization
+## Data Visualization is the subject that teach how to transform and convey insight to the audience in term of visual. I learn how to construct and to use it efficiently. I use multiple software such as MS Excel, MS Power BI, and Tableau, to create a visualization. On top of that, I am cable of using RStudio to create visualization, this particular report is created by RStudio. The grading system including an attendance, 5 Quiz, 5 Assignments, Midterm, and Final.
+```
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+dvdf$List <- factor(dvdf$List, levels = c("Attendance", "Quiz 1", "Assignment 1", "Quiz 2", "Assignment 2", "Midterm", "Quiz 3", "Assignment 3", "Quiz 4", "Assignment 4", "Quiz 5", "Assignment 5", "Final", "Total"))
+
+dvscore <- dvdf %>%
+             filter(List != "Total") %>%
+               ggplot(aes(x = List)) +
+                 geom_col(aes(y = Total), fill = "white", color = "black") +
+                 geom_col_pattern(aes(y = Score), fill = "white", color = "Black", pattern = "stripe") +
+                 geom_text(aes(y = Total, label = Max), vjust = -0.5) +
+                 geom_text(aes(y = Score, label = Score), vjust = 1.5, face = "bold", size = 5) +
+                 theme_classic() +
+                 theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 7),
+                       plot.title = element_text(size = 16, face = "bold")) +
+                 labs(title = "Data Visualization") +
+                 xlab(label = element_blank()) +
+                 ylab(label = "Score (%)") +
+                 scale_y_continuous(limits = c(0, 30)) 
+
+dvprogress <- dvdf %>%
+                filter(List == "Total") %>%
+                  ggplot(aes(x = List)) +
+                    geom_col(aes(y = Total), fill = "white", color = "black") +
+                    geom_col_pattern(aes(y = Max), fill = "yellow", color = "Black", pattern = "stripe") +
+                    geom_text(aes(y = Max, label = Max), hjust = -0.25, face = "bold", size = 5) +
+                    theme_classic() +
+                    labs(x = NULL) +
+                    xlab(label = element_blank()) +
+                    ylab(label = "Progression (%)") +
+                    coord_flip()
+
+dvchart <- ggarrange(dvscore, dvprogress, ncol = 1, nrow = 2, widths = c(1,1), heights = c(3,1))
+dvchart
+```
+
+
+```{r}
+# 3. Business Analytics
+## Business Analytics is a subject that teach the fundamental of R programming and how to perform data wrangling, Fundamental of Statistics and how to interpret the model's outcome.    
+```
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+badf$List = factor(badf$List, levels = c("Assignment 1", "Assignment 2", "Assignment 3", "Quiz 1", "Quiz 2", "Project", "Final", "Total"))
+
+bascore <- badf %>% 
+             filter(List != "Total") %>%
+               ggplot(aes(x = List)) +
+                 geom_col(aes(y = Total), fill = "white", color = "black") +
+                 geom_col_pattern(aes(y = Score), fill = "white", color = "Black", pattern = "stripe") +
+                 geom_text(aes(y = Total, label = Max), vjust = -0.5) +
+                 geom_text(aes(y = Score, label = Score), vjust = 1.5, face = "bold", size = 5) +
+                 theme_classic() +
+                 theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 7),
+                       plot.title = element_text(size = 16, face = "bold")) +
+                 labs(title = "Business Analytics") +
+                 xlab(label = element_blank()) +
+                 ylab(label = "Score (%)") +
+                 scale_y_continuous(limits = c(0, 30))
+
+baprogress <- badf %>%
+                filter(List == "Total") %>%
+                  ggplot(aes(x = List)) +
+                    geom_col(aes(y = Total), fill = "white", color = "black") +
+                    geom_col_pattern(aes(y = Max), fill = "yellow", color = "Black", pattern = "stripe") +
+                    geom_text(aes(y = Max, label = Max), hjust = -0.25, face = "bold", size = 5) +
+                    theme_classic() +
+                    labs(x = NULL) +
+                    xlab(label = element_blank()) +
+                    ylab(label = "Progression (%)") +
+                    coord_flip()
+
+bachart <- ggarrange(bascore, baprogress, ncol = 1, nrow = 2, widths = c(1,1), heights = c(3,1))
+bachart
+```
+
+
+```{r}
+# 4. Analytic in Practice
+## This subject related to how to do a business analytics life cycle and theories. Project management under Agile and Scrum methodology. Practice the process of business analytic.
+```
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+aipdf$List = factor(aipdf$List, levels = c("Attendance", "Quiz 1", "Quiz 2", "Quiz 3", "Quiz 4", "Quiz 5", "Quiz 6", "Quiz 7", "Assignment 1", "Assignment 2", "Discussion", "Final", "Total"))
+
+aipscore <- aipdf %>% 
+               filter(List != "Total") %>%
+                 ggplot(aes(x = List)) +
+                   geom_col(aes(y = Total), fill = "white", color = "black") +
+                   geom_col_pattern(aes(y = Score), fill = "white", color = "Black", pattern = "stripe") +
+                   geom_text(aes(y = Total, label = Max), vjust = -0.5) +
+                   geom_text(aes(y = Score, label = Score), vjust = 1.5, face = "bold", size = 4) +
+                   theme_classic() +
+                   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 7),
+                         plot.title = element_text(size = 16, face = "bold")) +
+                   labs(title = "Analytice in Practice") +
+                   xlab(label = element_blank()) +
+                   ylab(label = "Score (%)") +
+                   scale_y_continuous(limits = c(0, 35))
+
+aipprogress <- aipdf %>%
+                  filter(List == "Total") %>%
+                    ggplot(aes(x = List)) +
+                      geom_col(aes(y = Total), fill = "white", color = "black") +
+                      geom_col_pattern(aes(y = Max), fill = "yellow", color = "Black", pattern = "stripe") +
+                      geom_text(aes(y = Max, label = Max), hjust = -0.25, face = "bold", size = 5) +
+                      theme_classic() +
+                      labs(x = NULL) +
+                      xlab(label = element_blank()) +
+                      ylab(label = "Progression (%)") +
+                      coord_flip()
+
+aipchart <- ggarrange(aipscore, aipprogress, ncol = 1, nrow = 2, widths = c(1,1), heights = c(3,1))
+aipchart
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
