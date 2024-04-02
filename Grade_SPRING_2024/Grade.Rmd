@@ -44,7 +44,7 @@ aipdf <- read_excel(filepath, sheet ="AiP")
 
 ```{r}
 # 1. Fundamental of Machine Learning
-## This subject is a basic of machine learning focusing in Supervised Machine Learning including K-NN classification, Naive Bayes Classification, K-mean Clustering, and DBSCAN Clustering algorithm. Grading system divides into 5 assignments, attendance and final exam. At the moment, I'm working on my 3rd assignment. My target is to get A (94%) or at least A- on this subject.
+## This subject is a basic of machine learning focusing in Supervised Machine Learning including K-NN classification, Naive Bayes Classification, K-mean Clustering, and DBSCAN Clustering algorithm. Grading system divides into 5 assignments, attendance and final exam.
 ```
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 fmldf$List <- factor(fmldf$List, levels = c("Attendance", "Assignment 1", "Assignment 2", "Assignment 3", "Assignment 4", "Assignment 5", "Final", "Total"))
@@ -125,7 +125,7 @@ dvchart
 ## Business Analytics is a subject that teach the fundamental of R programming and how to perform data wrangling, Fundamental of Statistics and how to interpret the model's outcome.    
 ```
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-badf$List = factor(badf$List, levels = c("Assignment 1", "Assignment 2", "Assignment 3", "Assignment 4", "Assignment 5", "Quiz 1", "Quiz 2", "Project", "Final", "Total"))
+badf$List = factor(badf$List, levels = c("Assignment 1", "Assignment 2", "Assignment 3", "Quiz 1", "Quiz 2", "Project", "Final", "Total"))
 
 bascore <- badf %>% 
              filter(List != "Total") %>%
