@@ -1,0 +1,212 @@
+---
+title: "FML_Assignment4"
+author: "Thanasit C."
+date: "2024-03-21"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+---
+## 1. Summary
+The dataset contains multiple financial ratios of 21 pharmaceutical stocks. The clustering process is used to differentiate stocks into 5 clusters, including 'Overpriced stocks', 'Start-up stocks', 'Cash cow stocks', 'Growth stocks', and 'Best stocks.' Each cluster has its own characteristics, details can be found in Section 5.
+\
+I performed both Euclidean and Manhattan K-means, but only the Euclidean calculation is used in all explanation sections because the results are much better compared to the Manhattan calculation. The optimal K is equal to 5, calculated using the 'WSS' and 'Silhouette' methods.
+
+
+## 2. Library
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+library(dplyr)
+library(tidyr)
+library(factoextra)
+library(flexclust)
+library(caret)
+```
+
+
+
+## 3. Import Data
+```{r, echo=TRUE}
+## 3.1. Set working directory
+setwd("/Users/sieng/Documents/Study/MS.Business Analytics/SPRING 2024/Fundamental of Machine Learning/Assignment/Assignment 4")
+
+## 3.2. Import csv file as dataframe format
+maindf <- read.csv("Pharmaceuticals.csv") %>% as.data.frame()
+
+## 3.3. Check data structure
+str(maindf)
+```
+
+
+
+## 4. Data Manipulation
+4.1 Handle missing value\
+```{r, echo=TRUE, results='hold'}
+# 1) Find N/A value
+sumna <- sum(is.na(maindf))
+print("Number of N/A values in data set")
+sumna
+
+colsumna <- colSums(is.na(maindf))
+print("Number of N/A by column")
+colsumna
+```
+
+
+4.2 Reassign data attributes.\
+```{r, echo=TRUE}
+# 4.2 correcting data attributes 
+## 1).number()/integer() ###############
+
+## 2).factor() ###############
+maindf$Symbol <- factor(maindf$Symbol)
+maindf$Name <- factor(maindf$Name)
+maindf$Median_Recommendation <- factor(maindf$Median_Recommendation, levels = c("Strong Buy", "Moderate Buy", "Hold", "Moderate Sell", "Strong Sell"))
+maindf$Location <- factor(maindf$Location)
+maindf$Exchange <- factor(maindf$Exchange)
+
+str(maindf)
+summary(maindf)
+```
+
+
+
+## 5. Question and Analysis
+5.1 Question_A; Use only the numerical variables (1 to 9) to cluster the 21 firms. Justify the various choices made in conducting the cluster analysis, such as weights for different variables, the specific clustering algorithm(s) used, the number of clusters formed, and so on.\
+Answer_A; I performed clustering by using both Euclidean and Manhattan methods. The optimal K is equal to 5 based on 'Silhouette' method, unfortunately, 'Wss' method is not provide a clear result.
+```{r, echo=TRUE, results='hide'}
+## Answer_A
+set.seed(22)
+## 1) Data selection 
+QA_data <- maindf %>%
+             tibble::column_to_rownames("Symbol") %>%
+             select(2:10)
+
+## 2) Normalization
+QA_norm_process <- caret::preProcess(QA_data, method = c("center", "scale"))
+QA_data_norm <- predict(QA_norm_process, QA_data)
+```
+```{r, echo=TRUE, results='hold'}
+## 3) Find optimal K
+## Method = wss
+fviz_nbclust(QA_data_norm, FUNcluster = kmeans, method = "wss")
+
+### Method = silhouette
+fviz_nbclust(QA_data_norm, FUNcluster = kmeans, method = "silhouette")
+```
+```{r, echo=TRUE}
+## 4) K-means: Euclidean
+### Distance Matrix
+QA_data_dist_euc <- dist(QA_data_norm, method = "euclidean")
+#as.matrix(QQA_data_dist_euc)
+fviz_dist(QA_data_dist_euc)
+
+## Optimal K = 5
+set.seed(22)
+QA_Kmean_Euc_opt <- kmeans(QA_data_norm, centers = 5)
+fviz_cluster(QA_Kmean_Euc_opt, data = QA_data_norm, ggtheme = theme_classic(), star.plot = TRUE)
+```
+```{r, echo=TRUE,results='hold'}
+## 5) K-means: Manhattan
+### Distance Matrix
+QA_data_dist_man <- dist(QA_data_norm, method = "manhattan")
+#as.matrix(QA_data_dist_man)
+fviz_dist(QA_data_dist_man)
+
+## Optimal K = 5
+set.seed(22)
+QA_Kmean_Man_opt <- kcca(QA_data_norm, k = 5, family = kccaFamily("kmedians"))
+Man_cluster_index <- predict(QA_Kmean_Man_opt)
+image(QA_Kmean_Man_opt)
+points(QA_data_norm, col = Man_cluster_index)
+```
+
+
+5.2 Question_B: Interpret the clusters with respect to the numerical variables used in forming the clusters.
+```{r}
+QB_data <- QA_data %>%
+             mutate(EucPrediction = QA_Kmean_Euc_opt$cluster) %>%
+             mutate(ManPrediction = Man_cluster_index) %>%
+             arrange(EucPrediction)
+QB_data
+```
+```{r, echo=FALSE}
+print("Answer_B")
+print("In Question_A, I performed both Euclidean and Manhattan K-means, but the results of Euclidean are much better, as shown in the table above. Below, all explanations are based on the Euclidean methodology. Since the optimal K equals 5, there are 5 clusters.")
+print("The first cluster (1) includes AGN, BAY, and PHA, considered as the highest-risk companies due to their high PE ratio, low ROE and ROA, and low profit margin. Investing in this group is not a good choice since it is overpriced (PE ratio is too high) and has low profitability.")
+print("The second cluster, 2, comprises high-risk companies including CHITT, ELN, IVX, and MRX. This group has a very small market capitalization, relatively high beta, high leverage ratio, high revenue growth, and a decent net profit margin. Companies in this group are small companies in an expansion phase with a high leverage level but still have a great chance for growth.")
+print("The third group, 3, comprises moderate-risk companies including ABT, AZN, BMY, LLY, NVS, SGP, and WYE. These are mid-cap companies with moderate beta, PE ratio, good ROE, ROA, and asset turnover. The net profit margin is high; however, revenue growth is relatively low. This group of companies is characterized as cash cows in a mature phase with low potential for growth but capable of generating a lot of cash.")
+print("The fourth group, 4, comprises mid-cap companies with a strong financial standing in every aspect, including AHM, APE, and WPI. They exhibit moderate PE ratios and beta, good ROE, asset turnover, and leverage levels. Although their ROA is somewhat low, they demonstrate high revenue growth and net profit margins.")
+print("Lastly, group 5 includes GSK, JNJ, MRK, and PFE. This group comprises large-cap companies with excellent financial statuses. Investing in this group is recommended; the stock prices are at fair value (moderate PE ratio), and there is high potential for growth in the future.")
+```
+
+
+
+5.3 Question_C: Is there a pattern in the clusters with respect to the numerical variables (10 to 12)? (those not used in forming the clusters).
+```{r, echo=TRUE}
+QC_data <- maindf %>%
+             tibble::column_to_rownames("Symbol") %>%
+             select(-1) %>%
+             mutate(EucPrediction = QA_Kmean_Euc_opt$cluster) %>%
+             arrange(EucPrediction)
+
+table(QC_data$Median_Recommendation, QC_data$EucPrediction)
+table(QC_data$Location, QC_data$EucPrediction)
+table(QC_data$Exchange, QC_data$EucPrediction)
+```
+```{r, echo=FALSE}
+print("Answer_C")
+print("I created a tabular representation of the data across three categories and cluster predictions by K-means. The Recommendation and Prediction table might be somewhat challenging to understand due to the spread of the data; however, we can observe that most of the stocks are categorized as 'Hold' or 'Moderate Buy.' Out of 21 stocks, 13 are from the US and are clustered in groups 2, 3, and 5. Stocks from other countries have fewer representations, some with only one stock, making interpretation challenging. Lastly, the majority of the stocks are listed on the NYSE, with only one stock listed on the AMEX and NASDAQ.")
+print("The first three tables are difficult to understand, so grouping the data will aid in interpretation. Since the 'Exchange' variable doesn't provide significant information, I decided to drop it. Then, I grouped recommendations from 5 levels to 3 levels, including 'Buy,' 'Hold,' and 'Sell.' Lastly, regarding the country category, I grouped 'CANADA' with 'US' as 'US' and grouped the other countries as 'EURO'.")
+```
+```{r, echo=TRUE}
+QC_data2 <- QC_data %>%
+              mutate(Median_Recommendation = gsub("Moderate ", "", Median_Recommendation),
+                     Median_Recommendation = gsub("Strong ", "", Median_Recommendation)) %>%
+              mutate(Location = gsub("CANADA", "US", Location),
+                     Location = gsub("FRANCE", "EURO", Location),
+                     Location = gsub("GERMANY", "EURO", Location),
+                     Location = gsub("IRELAND", "EURO", Location),
+                     Location = gsub("SWITZERLAND", "EURO", Location),
+                     Location = gsub("UK", "EURO", Location))
+
+table(QC_data2$Median_Recommendation, QC_data2$EucPrediction)
+table(QC_data2$Location, QC_data2$EucPrediction)
+table(QC_data2$Location, QC_data2$Median_Recommendation)
+```
+```{r, echo=FALSE}
+print("New three tables that I created are much easier to understand.")
+print("First, the table between 'Recommendation' and 'Clustered Prediction.' There are 'Buy' recommendations in every cluster. Half of the list is 'Hold' recommended. Lastly, there are a few 'Sell' recommended stocks, which are in clusters 2, 3, and 4.")
+print("The second table shows the relationship between 'Country' and 'Recommendation'. Most 'US' stocks are clustered in groups 2, 3, and 5. On the other hand, 'EURO' stocks are spread equally across all 5 clusters.")
+print("The last table shows the relationship between 'Country' and 'Recommendation'. It seems that 'US' stocks perform well since most of them are recommended to 'Buy' or 'Hold'. Conversely, the proportion of 'Sell' recommendations for 'EURO' stocks is a bit high, at nearly 30%.")
+```
+
+
+
+5.4 Question_D: Provide an appropriate name for each cluster using any or all of the variables in the dataset.
+```{r, echo=TRUE}
+QD_data <- QC_data2
+QD_data
+```
+```{r, echo=FALSE}
+print("Answer_D")
+print("As the results of clustering process, there are 5 clusters. I've explained some characteristics of each cluster in the Question_B. Below is an appropriate name for each cluster.")
+print("Cluster 1; 'Overvalued stocks'.  The main characteristic is an extremely high P/E ratio and low net profit margin. Investors should avoid this group of stocks.")
+print("Cluster 2, 'Start-up stocks'. These are small-cap stocks in an expansion phase, characterized by a high leverage ratio and high growth potential but low return on assets. Investing in this group of stocks requires a very careful understanding of the business.")
+print("Cluster 3, 'Cash cow stocks'. This cluster comprises mid-to-large-cap stocks with a good profit margin but low potential growth. You can expect a high dividend yield from this cluster.")
+print("Cluster 4, 'Growth stocks'. This cluster is a small-to-mid-cap stocks trade at fair value with a very high growth potential. However, return on investment or net profit margin seems to be a bit low. Investment in this group of stock require a consistency in market updates,")
+print("Cluster 5, 'Best stocks'. Big-cap stocks trade at fair value, with low risk (low beta and low leverage), high potential future growth, and a high profitability ratio. Both dividends and capital growth can be expected; there are no stocks better than these.")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
